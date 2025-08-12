@@ -11,6 +11,18 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedIndex: -1,
     opacity: 0.5,
   };
+  let isComparisonActive = false;
+
+  function updateCompareButtonState(isActive) {
+    isComparisonActive = isActive;
+    if (isActive) {
+      compareButton.textContent = "비교 종료";
+      compareButton.classList.add("danger");
+    } else {
+      compareButton.textContent = "현재 화면과 비교";
+      compareButton.classList.remove("danger");
+    }
+  }
 
   function renderImageList() {
     imageList.innerHTML = "";
@@ -56,6 +68,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     updateSettings(result);
     renderImageList();
+  });
+
+  // 팝업이 열릴 때, 현재 탭의 오버레이 상태를 확인합니다.
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0] && tabs[0].id) {
+      chrome.tabs.sendMessage(
+        tabs[0].id,
+        { action: "get-status" },
+        (response) => {
+          if (!chrome.runtime.lastError && response?.status === "active") {
+            updateCompareButtonState(true);
+          } else {
+            updateCompareButtonState(false);
+          }
+        }
+      );
+    }
   });
 
   function sendSettingUpdate(key, value) {
@@ -125,6 +154,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   compareButton.addEventListener("click", () => {
+    if (isComparisonActive) {
+      // 오버레이가 활성화 상태이면 종료 메시지를 보냅니다.
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(
+            tabs[0].id,
+            { action: "stop-comparison" },
+            () => {
+              updateCompareButtonState(false);
+            }
+          );
+        }
+      });
+      return;
+    }
+
+    // 오버레이가 비활성화 상태이면 시작 로직을 실행합니다.
     if (state.selectedIndex === -1) {
       alert("먼저 이미지를 붙여넣어 주세요.");
       return;
@@ -157,8 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     "콘텐츠 스크립트와 통신할 수 없습니다. 페이지를 새로고침하고 다시 시도해주세요."
                   );
                 } else {
-                  console.log(response?.status);
-                  window.close();
+                  updateCompareButtonState(true);
                 }
               }
             );

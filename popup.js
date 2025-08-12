@@ -167,6 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
             { images: state.images, selectedIndex: state.selectedIndex },
             () => {
               renderImageList();
+              // 붙여넣기 후 즉시 오버레이를 켭니다.
+              turnOnOverlay();
             }
           );
         };
@@ -176,6 +178,41 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  function turnOnOverlay() {
+    if (state.selectedIndex === -1) {
+      alert("비교할 이미지를 먼저 선택해주세요.");
+      return;
+    }
+    const imageURL = state.images[state.selectedIndex];
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0].id;
+      chrome.scripting.executeScript(
+        { target: { tabId: tabId }, files: ["content.js"] },
+        () => {
+          setTimeout(() => {
+            chrome.tabs.sendMessage(
+              tabId,
+              {
+                action: "start-comparison",
+                imageURL: imageURL,
+                opacity: state.opacity,
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  alert(
+                    "콘텐츠 스크립트와 통신할 수 없습니다. 페이지를 새로고침하고 다시 시도해주세요."
+                  );
+                } else {
+                  updateToggleButtonState(true);
+                }
+              }
+            );
+          }, 100);
+        }
+      );
+    });
+  }
 
   onOffToggle.addEventListener("click", () => {
     if (onOffToggle.disabled) return;
@@ -195,38 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     } else {
       // Turn ON
-      if (state.selectedIndex === -1) {
-        alert("먼저 이미지를 붙여넣어 주세요.");
-        return;
-      }
-      const imageURL = state.images[state.selectedIndex];
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id;
-        chrome.scripting.executeScript(
-          { target: { tabId: tabId }, files: ["content.js"] },
-          () => {
-            setTimeout(() => {
-              chrome.tabs.sendMessage(
-                tabId,
-                {
-                  action: "start-comparison",
-                  imageURL: imageURL,
-                  opacity: state.opacity,
-                },
-                (response) => {
-                  if (chrome.runtime.lastError) {
-                    alert(
-                      "콘텐츠 스크립트와 통신할 수 없습니다. 페이지를 새로고침하고 다시 시도해주세요."
-                    );
-                  } else {
-                    updateToggleButtonState(true);
-                  }
-                }
-              );
-            }, 100);
-          }
-        );
-      });
+      turnOnOverlay();
     }
   });
 });

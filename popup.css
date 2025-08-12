@@ -109,6 +109,11 @@ body {
   background-color: #4285f4;
 }
 
+.toggle-btn:disabled {
+  background-color: #e0e0e0;
+  cursor: not-allowed;
+}
+
 .control-group input[type="range"] {
   width: 100%;
 }

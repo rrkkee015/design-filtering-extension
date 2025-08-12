@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>디자인 비교</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div id="image-list-wrapper">
+      <div id="image-list">
+        <!-- 썸네일이 여기에 동적으로 추가됩니다 -->
+      </div>
+      <p id="paste-prompt" style="display: none">
+        디자인 이미지(PNG)를<br />여기에 붙여넣으세요 (⌘V)
+      </p>
+    </div>
+
+    <div class="control-group">
+      <label for="opacity-slider"
+        >오버레이 불투명도: <span id="opacity-value">0.5</span></label
+      >
+      <input
+        type="range"
+        id="opacity-slider"
+        min="0"
+        max="1"
+        step="0.1"
+        value="0.5"
+      />
+    </div>
+
+    <div id="button-group" class="control-group">
+      <button id="compare-button">현재 화면과 비교</button>
+      <button id="delete-button" class="danger" style="display: none">
+        이미지 삭제
+      </button>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

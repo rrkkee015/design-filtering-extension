@@ -1,0 +1,62 @@
+/* 오버레이 루트 컨테이너 */
+#__design-compare-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483647; /* 최대 z-index */
+  pointer-events: none; /* 하위 컨트롤 외에는 클릭 이벤트 통과 */
+  background: transparent;
+}
+
+#__design-compare-root canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto; /* 캔버스 자체는 드래그 가능해야 함 */
+  cursor: move;
+}
+
+/* 컨트롤 패널 */
+#__design-compare-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  pointer-events: auto; /* 컨트롤은 클릭 가능해야 함 */
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+#__design-compare-controls button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#__design-compare-controls button.active {
+  background-color: #2e8b57;
+}
+
+#__design-compare-controls .__design-compare-close-btn {
+  background-color: #f44336;
+}
+
+#__design-compare-controls .__design-compare-scale-toggle,
+#__design-compare-controls .__design-compare-mode-toggle {
+  min-width: 80px;
+}

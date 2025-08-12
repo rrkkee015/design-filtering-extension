@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const opacitySlider = document.getElementById("opacity-slider");
   const opacityValue = document.getElementById("opacity-value");
   const compareButton = document.getElementById("compare-button");
-  const deleteButton = document.getElementById("delete-button");
 
   let state = {
     images: [],
@@ -30,15 +29,16 @@ document.addEventListener("DOMContentLoaded", () => {
       pastePrompt.style.display = "block";
       imageList.style.display = "none";
       compareButton.disabled = true;
-      deleteButton.style.display = "none";
       return;
     }
     pastePrompt.style.display = "none";
     imageList.style.display = "flex";
     compareButton.disabled = false;
-    deleteButton.style.display = "block";
 
     state.images.forEach((imgSrc, index) => {
+      const container = document.createElement("div");
+      container.className = "thumbnail-container";
+
       const img = document.createElement("img");
       img.src = imgSrc;
       if (index === state.selectedIndex) {
@@ -50,7 +50,18 @@ document.addEventListener("DOMContentLoaded", () => {
         renderImageList();
         sendSettingUpdate("imageURL", state.images[state.selectedIndex]);
       });
-      imageList.appendChild(img);
+
+      const deleteBtn = document.createElement("div");
+      deleteBtn.className = "delete-thumb-btn";
+      deleteBtn.innerHTML = "&times;";
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // 이미지 클릭 이벤트 전파 방지
+        deleteImage(index);
+      });
+
+      container.appendChild(img);
+      container.appendChild(deleteBtn);
+      imageList.appendChild(container);
     });
   }
 
@@ -109,6 +120,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function deleteImage(indexToDelete) {
+    state.images.splice(indexToDelete, 1);
+
+    // 선택 인덱스 조정
+    if (state.selectedIndex === indexToDelete) {
+      state.selectedIndex = state.images.length > 0 ? 0 : -1;
+    } else if (state.selectedIndex > indexToDelete) {
+      state.selectedIndex -= 1;
+    }
+
+    chrome.storage.local.set(
+      { images: state.images, selectedIndex: state.selectedIndex },
+      () => {
+        renderImageList();
+        const newImageURL =
+          state.selectedIndex !== -1 ? state.images[state.selectedIndex] : null;
+        sendSettingUpdate("imageURL", newImageURL);
+
+        if (state.images.length === 0) {
+          updateCompareButtonState(false);
+        }
+      }
+    );
+  }
+
   opacitySlider.addEventListener("input", () => {
     const newOpacity = parseFloat(opacitySlider.value);
     opacityValue.textContent = newOpacity;
@@ -138,32 +174,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
     }
-  });
-
-  deleteButton.addEventListener("click", () => {
-    if (state.selectedIndex === -1) return;
-
-    state.images.splice(state.selectedIndex, 1);
-
-    // 삭제 후 선택 인덱스 조정 (이전 이미지를 선택하거나, 없으면 -1)
-    if (state.selectedIndex >= state.images.length) {
-      state.selectedIndex = state.images.length - 1;
-    }
-
-    chrome.storage.local.set(
-      { images: state.images, selectedIndex: state.selectedIndex },
-      () => {
-        renderImageList();
-        const newImageURL =
-          state.selectedIndex !== -1 ? state.images[state.selectedIndex] : null;
-        sendSettingUpdate("imageURL", newImageURL);
-
-        // 마지막 이미지가 삭제되었다면, 비교 버튼 상태를 초기화합니다.
-        if (state.images.length === 0) {
-          updateCompareButtonState(false);
-        }
-      }
-    );
   });
 
   compareButton.addEventListener("click", () => {

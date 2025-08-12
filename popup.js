@@ -28,11 +28,13 @@ document.addEventListener("DOMContentLoaded", () => {
     imageList.innerHTML = "";
     if (state.images.length === 0) {
       pastePrompt.style.display = "block";
+      imageList.style.display = "none";
       compareButton.disabled = true;
       deleteButton.style.display = "none";
       return;
     }
     pastePrompt.style.display = "none";
+    imageList.style.display = "flex";
     compareButton.disabled = false;
     deleteButton.style.display = "block";
 
@@ -140,15 +142,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   deleteButton.addEventListener("click", () => {
     if (state.selectedIndex === -1) return;
+
     state.images.splice(state.selectedIndex, 1);
-    state.selectedIndex = state.images.length > 0 ? 0 : -1;
+
+    // 삭제 후 선택 인덱스 조정 (이전 이미지를 선택하거나, 없으면 -1)
+    if (state.selectedIndex >= state.images.length) {
+      state.selectedIndex = state.images.length - 1;
+    }
+
     chrome.storage.local.set(
       { images: state.images, selectedIndex: state.selectedIndex },
       () => {
         renderImageList();
-        // 오버레이도 업데이트 (이미지가 있으면 첫번째 이미지로, 없으면 닫기)
-        const newImageURL = state.selectedIndex !== -1 ? state.images[0] : null;
+        const newImageURL =
+          state.selectedIndex !== -1 ? state.images[state.selectedIndex] : null;
         sendSettingUpdate("imageURL", newImageURL);
+
+        // 마지막 이미지가 삭제되었다면, 비교 버튼 상태를 초기화합니다.
+        if (state.images.length === 0) {
+          updateCompareButtonState(false);
+        }
       }
     );
   });
